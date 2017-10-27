@@ -25,6 +25,7 @@
         "symfony/filesystem": "~2.7.0",
         "mtdowling/cron-expression":"~1.0",
         "symfony/var-dumper": "~3.3.5",
-        "monolog/monolog":"~1.17.1"
+        "monolog/monolog":"~1.17.1",
+        "twig/twig": "~1.0"
     }
 }

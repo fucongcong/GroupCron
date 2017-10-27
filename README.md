@@ -4,6 +4,10 @@
 - php > 5.6
 - swoole > 1.7.16 
 
+#### 安装依赖
+
+    composer install
+
 #### 快速开始
 修改config/cron.php文件 ，向job中添加你的定时任务.
 
@@ -39,7 +43,7 @@
 
 #### 启动任务
 
-    bin/cron start
+    app/cron start
 
 #### 命令使用
 

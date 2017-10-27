@@ -19,6 +19,11 @@ return [
             'command' => 'src\Test',//执行的类库
         ],
 
+        [
+            'name' => 'TestLog1',//任务名
+            'time' => '*/2 */2 * * *',//定时规则 分 小时 天 周 月
+            'command' => 'src\Test',//执行的类库
+        ],
         // [
         //     'name' => 'TestLog2',//任务名
         //     'time' => '*/2 */4 * * *',//定时规则 分 小时 天 周 月

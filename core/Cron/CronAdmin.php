@@ -43,14 +43,14 @@ class CronAdmin
                 return;
             }
 
-            $cacheDir = \Config::get('cron::cache_dir') ? : 'runtime/cron';
+            $cacheDir = \Config::get('cron::cache_dir') ? : 'runtime';
             $jobs = \Config::get('cron::job');
-            $pid = \FileCache::get('pid', $cacheDir) ? : 0;
+            $pid = $this->get('pid', $cacheDir) ? : 0;
 
             $works = [];
             foreach ($jobs as $job) {
-                $cronAdmin = \FileCache::get('cronAdmin', $cacheDir."/".$job['name']);
-                $work_id = \FileCache::get('work_id', $cacheDir."/".$job['name']);
+                $cronAdmin = $this->get('cronAdmin', $cacheDir."/".$job['name']);
+                $work_id = $this->get('work_id', $cacheDir."/".$job['name']);
                 if (is_array($cronAdmin) && is_array($work_id)) {
                     $work = $cronAdmin[0];
                     if ($work['pid'] == $work_id[0]) {
@@ -111,6 +111,14 @@ class CronAdmin
         $jobName = $post['jobName'];
         exec("cd {$path} && app/cron rejob {$jobName} > /dev/null &");
         \Log::info("cd {$path} && app/cron rejob {$jobName} > /dev/null &", ['rejobWorker']);
+    }
+
+    private function get($cacheName, $cacheDir)
+    {
+        $dir = __ROOT__.$cacheDir."/".$cacheName;
+
+        if (file_exists($dir)) return require $dir;
+        return null;
     }
 
     private function twigInit()
