@@ -1,0 +1,30 @@
+{
+    "name": "group/framework",
+    "description": "The Group Cron.",
+    "keywords": ["Cron", "Group"],
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "files": [
+            "core/App/helpers.php"
+        ],
+        "psr-4": {
+            "Group\\": "core/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Fu congcong",
+            "email": "cc@xitongxue.com",
+            "homepage": "https://github.com/fucongcong",
+            "role": "Lead Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3",
+        "symfony/filesystem": "~2.7.0",
+        "mtdowling/cron-expression":"~1.0",
+        "symfony/var-dumper": "~3.3.5",
+        "monolog/monolog":"~1.17.1"
+    }
+}

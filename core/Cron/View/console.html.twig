@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html class="">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Cron Admin</title>
+  <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+</head>
+<body>
+
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">Group Cron Admin</a>
+      </div>
+
+      <form class="navbar-form navbar-right">
+        {% if pid > 0 %}
+          <button type="button" class="btn btn-warning js-action" data-action="restartMaster">重启主进程</button>
+          <button type="button" class="btn btn-danger js-action" data-action="stopMaster">关闭主进程</button>
+        {% else %}
+          <button type="button" class="btn btn-success js-action" data-action="startMaster">启动主进程</button>
+        {% endif %}
+      </form>
+    </div>
+  </nav>
+
+  {% if pid > 0 %}
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-12">
+          <table class="table table-bordered">
+            <tr>
+              <th>进程ID</th>
+              <th>任务名</th>
+              <th>规则</th>
+              <th>处理类</th>
+              <th>上次执行时间</th>
+              <th>下次执行时间</th>
+              <th>操作</th>
+            </tr>
+            {% for key,work in works|default(null) %}
+            <tr>
+              <td>{{ work.pid }}</td>
+              <td>{{ work.job.name }}</td>
+              <td>{{ work.job.time }}</td>
+              <td>{{ work.job.command }}::handle()</td>
+              <td>{% if work.nextTime %}{{ work.startTime }}{% else %}未开始{% endif %}</td>
+              <td>{{ work.nextTime|default('/') }}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-info js-work-action" data-action="execWorker" data-job="{{ work.job.name }}">执行脚本</button>
+                  <button type="button" class="btn btn-danger js-work-action" data-action="rejobWorker" data-job="{{ work.job.name }}">重启进程</button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+          </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="modal fade" tabindex="-1" role="dialog" id="js-modal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">操作中...</h4>
+        </div>
+        <div class="modal-body">
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+    $('.js-action').on('click', function(){
+      $('#js-modal').modal('show');
+        action = $(this).data('action');
+        $.post('', {action:action}, function(res){
+          setTimeout(function(){
+            $('#js-modal').modal('hide');
+            window.location.href = "/";
+          }, 3000)
+        })
+    })
+
+    $('.js-work-action').on('click', function(){
+      $('#js-modal').modal('show');
+        action = $(this).data('action');
+        jobName = $(this).data('job');
+        $.post('', {action:action,jobName:jobName}, function(res){
+          setTimeout(function(){
+            $('#js-modal').modal('hide');
+            window.location.href = "/";
+          }, 3000)
+        })
+    })
+  </script>
+  </body>
+</html>
