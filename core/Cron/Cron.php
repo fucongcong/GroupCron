@@ -403,7 +403,6 @@ class Cron
         $processPid = $process->start();
 
         $this->setWorkerPid($processPid, $this->jobs[$i]['name']);
-        $process->name("GroupCron: ".$this->jobs[$i]['name']);
         
         $this->jobs[$i]['workId'] = $processPid;
         $this->workers[$this->jobs[$i]['name']] = [
