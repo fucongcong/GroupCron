@@ -55,7 +55,7 @@ class Cron
     public function __construct($argv, $loader)
     {
         $this->cacheDir = \Config::get('cron::cache_dir') ? : 'runtime/cron';
-        $this->tickTime = \Config::get('cron::tick_time') ? : 1000;
+        $this->tickTime = \Config::get('cron::tick_time') ? : 2;
         $this->argv = $argv;
         $this->loader = $loader;
         $this->jobs = \Config::get('cron::job');
@@ -90,7 +90,7 @@ class Cron
         //设置信号
         $this->setSignal();
 
-        swoole_timer_tick($this->tickTime, function($timerId) {
+        swoole_timer_tick($this->tickTime * 1000, function($timerId) {
             foreach ($this->jobs as $key => $job) {
                 $worker = $this->table->get($job['name'].'_worker');
                 $worker = json_decode($worker[$job['name'].'_worker'], true);

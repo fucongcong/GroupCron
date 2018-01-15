@@ -8,8 +8,8 @@ return [
     //log路径
     'log_dir' => 'runtime',
 
-    //定时器轮询周期，精确到毫秒
-    'tick_time' => 1000,
+    //定时器轮询周期，精确到秒
+    'tick_time' => 2,
 
     'job' => [
 
