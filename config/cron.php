@@ -8,6 +8,9 @@ return [
     //log路径
     'log_dir' => 'runtime',
 
+    #任务进程处理次数上限，超出后将会自动重启进程，释放内存
+    'max_handle' => 5,
+
     //定时器轮询周期，精确到秒
     'tick_time' => 2,
 

@@ -31,6 +31,8 @@ class Cron
 
     protected $table;
 
+    protected $max_handle;
+
     protected $daemon = false;
 
     protected $help = "
@@ -62,6 +64,7 @@ class Cron
         $this->workerNum = count($this->jobs);
         $this->logDir = \Config::get("cron::log_dir");
         $this->daemon = \Config::get("cron::daemon") ? : false;
+        $this->max_handle = \Config::get("cron::max_handle") ? : 10;
         \Log::$cacheDir = $this->logDir;
     }
 
@@ -115,7 +118,6 @@ class Cron
         }
 
          exit("请执行app/cron server 查看当前cron信息\n");
-        //print_r(\FileCache::get('cronAdmin', $this->cacheDir));
     }
 
     public function restart()
@@ -279,7 +281,7 @@ class Cron
                 foreach ($workers as $worker) {
                     if ($worker['pid'] == $pid) {
                         $timerId = isset($worker['timerId']) ? $worker['timerId'] : 0;
-                        $this->restartJob($timerId, $worker['job']);
+                        $this->restartJob($worker['job']);
                     }
                 }
             }
@@ -297,19 +299,23 @@ class Cron
      */
     public function bindTick($job)
     {
-        $timer = ParseCrontab::parse($job['time']);
+        set_time_limit(0);
 
-        if (is_null($timer)) return;
+        $count = 0;
+        while ($count <= $this->max_handle) {
+            $timer = ParseCrontab::parse($job['time']);
+            if (is_null($timer)) return;
 
-        $job['timer'] = $timer;
+            $job['timer'] = $timer;
+            $this->jobStart($job);
 
-        swoole_timer_tick(intval($timer * 1000), function($timerId, $job) {
+            if (sleep($timer) > 0) {
+               return; 
+            }
+            $count++;
+        }
 
-            $this->restartJob($timerId, $job);
-
-        }, $job);
-
-        $this->jobStart($job);
+        $this->restartJob($job);
     }
 
     private function checkStatus()
@@ -380,13 +386,10 @@ class Cron
         call_user_func_array([new $job['command'], 'handle'], []);
     }
 
-    private function restartJob($timerId = 0, $job)
+    private function restartJob($job)
     {
         foreach ($this->jobs as $key => $one) {
             if ($one['name'] == $job['name']) {
-                //清除该计数器
-                if ($timerId) swoole_timer_clear($timerId);
-                //\Log::info('restart '.$job['name'], [$job], 'cron.restart');
                 $this->table->set($job['name'].'_worker', [$job['name'].'_worker' => json_encode([])]);
                 $this->table->incr('workers_num', 'workers_num');
 
