@@ -1,4 +1,4 @@
-### Group-Cron php的秒级定时器
+### Group-Cron php实现的定时器
 
 #### 依赖
 - php > 5.6
