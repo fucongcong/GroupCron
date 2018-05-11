@@ -307,7 +307,10 @@ class Cron
             if (is_null($timer)) return;
 
             $job['timer'] = $timer;
+            $start = microtime(true);
             $this->jobStart($job);
+            $end = microtime(true);
+            $timer -= intval($end - $start);
 
             if (sleep($timer) > 0) {
                return; 
