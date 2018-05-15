@@ -33,6 +33,8 @@ class Cron
 
     protected $max_handle;
 
+    protected $timezone;
+
     protected $daemon = false;
 
     protected $help = "
@@ -63,9 +65,12 @@ class Cron
         $this->jobs = \Config::get('cron::job');
         $this->workerNum = count($this->jobs);
         $this->logDir = \Config::get("cron::log_dir");
+        $this->timezone = \Config::get("cron::timezone") ? : 'PRC';
         $this->daemon = \Config::get("cron::daemon") ? : false;
         $this->max_handle = \Config::get("cron::max_handle") ? : 10;
         \Log::$cacheDir = $this->logDir;
+
+        date_default_timezone_set($this->timezone);
     }
 
     /**
@@ -303,7 +308,7 @@ class Cron
 
         $count = 0;
         while ($count <= $this->max_handle) {
-            $timer = ParseCrontab::parse($job['time']);
+            $timer = ParseCrontab::parse($job['time'], $this->timezone);
             if (is_null($timer)) return;
 
             $job['timer'] = $timer;
@@ -383,7 +388,11 @@ class Cron
         \Log::info('定时任务启动'.$job['name'], [], 'cron.start');
 
         //先执行一次任务
-        call_user_func_array([new $job['command'], 'handle'], []);
+        try {
+            call_user_func_array([new $job['command'], 'handle'], []);
+        } catch (\Exception $e) {
+           \Log::error('定时任务执行失败'.$job['name'], [$e->getMessage()], 'cron.error'); 
+        }
     }
 
     private function restartJob($job)

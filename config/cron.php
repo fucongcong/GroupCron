@@ -3,6 +3,9 @@ return [
     //false时,重启注意清除cache
     'daemon' => true,
 
+    //设置时区
+    'timezone' => "PRC",
+
     'cache_dir' => 'runtime',
 
     //log路径
