@@ -39,15 +39,14 @@ class Cron
 
     protected $help = "
 \033[34m
- ----------------------------------------------------------
-
-     -----        ----      ----      |     |   / ----
-    /          | /        |      |    |     |   |      |
-    |          |          |      |    |     |   | ----/
-    |   ----   |          |      |    |     |   |
-     -----|    |            ----       ----     |
-
- ----------------------------------------------------------
+  - - - - - -         - - - - -      - - - - - -     \ \         \ \       - - - - - -
+ / - - - - - /     \ / / - - -  /  / - - - - -  \     \ \         \ \    \ \- - - - - -\
+\ \                 \ \             \ \          \ \   \ \         \ \    \ \           \ \
+ \ \        - - -    \ \             \ \          \ \   \ \         \ \    \ \- - - - - / /
+  \ \      / - - -/   \ \             \ \          \ \   \ \         \ \    \ \ - - - - -
+   \ \        \ \      \ \             \ \          \ \   \ \         \ \    \ \
+    \ \ - - -  \ \      \ \             \ \ - - - - - /    \ \ - - - - \      \ \
+     \ - -- -  \ /       \ \             \ - - - - -/       \ - - -  - - /     \ \
 \033[0m
 \033[31m 使用帮助: \033[0m
 \033[33m Usage: app/cron [start|restart|stop|status|exec (cron name)|rejob (cron name)]|server \033[0m
@@ -439,8 +438,8 @@ class Cron
     {
         foreach ($this->jobs as $key => $one) {
             if ($one['name'] == $job['name']) {
-                $this->table->set($job['name'].'_worker', [$job['name'].'_worker' => json_encode([])]);
-                $this->table->incr('workers_num', 'workers_num');
+                // $this->table->set($job['name'].'_worker', [$job['name'].'_worker' => json_encode([])]);
+                // $this->table->incr('workers_num', 'workers_num');
 
                 $this->removeWorkerPid($job['workId'], $job['name']);
                 swoole_process::kill($job['workId'], SIGKILL);
