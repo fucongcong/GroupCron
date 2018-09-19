@@ -57,6 +57,12 @@
 
     app/cron start
 
+#### 启动图形界面
+    
+    app/cron server & > /dev/null
+
+访问 http://localhost:10008
+
 #### 命令使用
 
     app/cron [start|restart|stop|status|exec (cron name)|rejob (cron name)]|server 
