@@ -14,8 +14,8 @@ define('__FILEROOT__', realpath(dirname(__FILE__)) . DIRECTORY_SEPARATOR . "../"
 $app = new App();
 $app -> initSelf();
 $provider = new Group\Cache\FileCacheServiceProvider($app::getInstance());
-$provider -> register();
+$provider->register();
 
 $cron = new Cron($argv, $loader);
-$cron -> run();
+$cron->run();
 

@@ -148,9 +148,9 @@ class Cron
                 //停止tick
                 swoole_process::kill($pid, SIGUSR2);
 
+                $workIds = $this->findWorkIds($this->logDir);
                 //杀掉worker进程
-                foreach ($this->jobs as $job) {
-                    $work_id = \FileCache::get('work_id', $this->cacheDir."/".$job['name']);
+                foreach ($workIds as $work_id) {
                     if (is_array($work_id)) {
                         //向子进程发送退出命令,结束完当前任务后退出
                         try {
@@ -279,7 +279,7 @@ class Cron
         $jobName = isset($argv[2]) ? $argv[2] :'';
         foreach ($this->jobs as $job) {
             if ($job['name'] == $jobName) {
-                $worker = \FileCache::get('cronAdmin', $this->cacheDir."/".$jobName);
+                $worker = FileCache::get('cronAdmin', $this->cacheDir."/".$jobName);
                 if (isset($worker[0])) {
                     $processPid = $worker[0]['pid'];
                     exec("kill -USR1 {$processPid}");
@@ -308,7 +308,7 @@ class Cron
         swoole_process::signal(SIGUSR1, function ($signo) use ($worker) {
             $pid = $worker->pid;
             foreach ($this->jobs as $job) {
-                $workers = \FileCache::get('cronAdmin', $this->cacheDir."/".$job['name']);
+                $workers = FileCache::get('cronAdmin', $this->cacheDir."/".$job['name']);
                 foreach ($workers as $worker) {
                     if ($worker['pid'] == $pid) {
                         $timerId = isset($worker['timerId']) ? $worker['timerId'] : 0;
@@ -369,7 +369,7 @@ class Cron
     private function setWorkerPid($pid, $jobName)
     {   
         $dir = $this->cacheDir."/".$jobName;
-        \FileCache::set('work_id', [$pid], $dir);
+        FileCache::set('work_id', [$pid], $dir);
     }
 
     /**
@@ -424,7 +424,7 @@ class Cron
         $worker['nextTime'] = date('Y-m-d H:i:s', time() + intval($job['timer']));
         $this->table->set($job['name'].'_worker', [$job['name'].'_worker' => json_encode($worker)]);
 
-        \FileCache::set('cronAdmin', [$worker], $this->cacheDir."/".$job['name']);
+        FileCache::set('cronAdmin', [$worker], $this->cacheDir."/".$job['name']);
   
         \Log::info('定时任务启动'.$job['name'], [], 'cron.start');
 
@@ -475,6 +475,33 @@ class Cron
         $this->table->set($this->jobs[$i]['name'].'_worker', [$this->jobs[$i]['name'].'_worker' => json_encode($worker)]);
 
         \Log::info("工作worker{$processPid}启动", [$this->jobs[$i]['name']], 'cron.work');
+    }
+
+    private  function findWorkIds($fileDir, $data = [])
+    {
+        if (is_dir($fileDir)) {
+            $dir = opendir($fileDir);
+            if (!$dir) {
+                return $data;
+            }
+            while (($file = readdir($dir)) !== false)
+            {   
+                $file = explode(".", $file);
+                $fileName = $file[0];
+
+                if ($fileName == "work_id") {
+                    $d = file_get_contents($fileDir."/".$fileName);
+                    if ($d) {
+                        $data[] = json_decode($d, true);
+                    }
+                } else if ($fileName) {
+                    $data = $this->findWorkIds($fileDir."/".$fileName, $data);
+                }
+            }
+            closedir($dir);
+        }
+
+        return $data;
     }
 
     private function init()
