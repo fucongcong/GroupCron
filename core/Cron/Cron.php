@@ -116,7 +116,7 @@ class Cron
 
         $this->setPid();
 
-        file_put_contents($this->cacheDir."/linsten_id", $this->linstenId);
+        FileCache::set('linsten_id', $this->linstenId, $this->cacheDir);
     }
 
     public function status()
@@ -204,10 +204,10 @@ class Cron
         swoole_process::signal(SIGUSR2, function ($signo) {
             //主进程停止tick
             \Log::info("主进程tick停止!", [], 'cron');
-            $linstenId = file_get_contents($this->cacheDir."/linsten_id");
+            $linstenId = FileCache::get('linsten_id', $this->cacheDir);
             if ($linstenId) {
                 swoole_timer_clear($linstenId);
-                @unlink($this->cacheDir."/linsten_id");
+                FileCache::remove('linsten_id', $this->cacheDir);
             }
         });
     }
@@ -379,28 +379,18 @@ class Cron
      */
     private function removeWorkerPid($pid, $jobName)
     {   
-        $dir = $this->cacheDir."/".$jobName;
-        @unlink($this->cacheDir."/".$jobName."/work_id");
+        FileCache::remove('work_id', $this->cacheDir."/".$jobName);
     }
 
     public function setPid()
     {
         $pid = posix_getpid();
-        $parts = explode('/', $this->cacheDir."/pid");
-        $file = array_pop($parts);
-        $dir = '';
-        foreach ($parts as $part) {
-            if (!is_dir($dir .= "$part/")) {
-                 mkdir($dir);
-            }
-        }
-        file_put_contents("$dir/$file", $pid);
+        FileCache::set('pid', $pid, $this->cacheDir);
     }
 
     public function getPid()
-    {
-        if (file_exists($this->cacheDir."/pid"))
-        return file_get_contents($this->cacheDir."/pid");
+    {   
+        return FileCache::get('pid', $this->cacheDir);
     }
 
     private function getJobByPid($pid)
