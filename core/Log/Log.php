@@ -71,7 +71,7 @@ class Log
         $logger = new Logger($model);
         $cacheDir = static::$cacheDir;
 
-        $logger->pushHandler(new StreamHandler(__ROOT__.$cacheDir.'/app.log', self::$levels[$level]));
+        $logger->pushHandler(new StreamHandler(__FILEROOT__.$cacheDir.'/app.log', self::$levels[$level]));
         $logger->pushHandler(new FirePHPHandler());
 
         return $logger->$level($message, $context);

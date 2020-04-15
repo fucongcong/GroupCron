@@ -77,6 +77,11 @@ class Config
         return $this->config;
     }
 
+    public function clearConfig()
+    {
+        $this->config = [];
+    }
+
     /**
      * return single class
      *
@@ -96,10 +101,16 @@ class Config
         $config = $this->config;
 
         if (!isset($config[$key])) {
-            $app = require("config/".$key.".php");
+            $app = require(__ROOT__."config/".$key.".php");
             $this->config = array_merge($this->config, [$key => $app]);
         }
 
         return $this->config;
+    }
+
+    public static function clear()
+    {   
+        self::$instance->clearConfig();
+        self::$instance = null;
     }
 }

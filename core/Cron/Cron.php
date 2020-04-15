@@ -69,6 +69,7 @@ class Cron
         $this->daemon = \Config::get("cron::daemon") ? : false;
         $this->max_handle = \Config::get("cron::max_handle") ? : 10;
         \Log::$cacheDir = $this->logDir;
+        $this->logDir = __FILEROOT__.$this->logDir;
 
         date_default_timezone_set($this->timezone);
     }
