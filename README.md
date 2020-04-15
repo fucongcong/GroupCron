@@ -59,7 +59,7 @@
 
 #### 启动图形界面
     
-    app/cron server > /dev/null & 
+    app/cron server
 
 访问 http://localhost:10008
 
