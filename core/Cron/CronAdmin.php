@@ -55,7 +55,7 @@ class CronAdmin
                 return;
             }
 
-            $cacheDir = \Config::get('cron::cache_dir') ? : 'runtime';
+            $cacheDir = \Config::get('cron::log_dir') ? : 'runtime';
             $pid = $this->get('pid', $cacheDir) ? : 0;
 
             $works = [];
@@ -64,9 +64,9 @@ class CronAdmin
                 $work_id = $this->get('work_id', $cacheDir."/".$job['name']);
                 if (is_array($cronAdmin) && is_array($work_id)) {
                     $work = $cronAdmin[0];
-                    if ($work['pid'] == $work_id[0]) {
-                        $works[] = $work;
-                    }
+                    $works[] = $work;
+                } else {
+                    $works[] = ['job' => $job, 'pid' => $work_id[0]];
                 }
             }
 

@@ -32,8 +32,6 @@ class Cron
 
     protected $table;
 
-    protected $max_handle;
-
     protected $timezone;
 
     protected $daemon = false;
@@ -51,7 +49,7 @@ class Cron
    \_/__/                       \/_/                               
 \033[0m
 \033[31m 使用帮助: \033[0m
-\033[33m Usage: app/cron [start|restart|stop|status|exec (cron name)|rejob (cron name)]|server \033[0m
+\033[33m Usage: app/cron [start|restart|stop|status|exec (cron name)|server \033[0m
 ";
     /**
      * 初始化环境
@@ -148,7 +146,8 @@ class Cron
         if (!empty($pid) && $pid) {
             if (swoole_process::kill($pid, 0)) {
                 //停止tick
-                swoole_process::kill($pid, SIGUSR2);
+                //swoole_process::kill($pid, SIGUSR2);
+                FileCache::remove('linsten_id', $this->cacheDir);
 
                 $workIds = $this->findWorkIds($this->logDir);
                 //杀掉worker进程
@@ -157,7 +156,7 @@ class Cron
                         //向子进程发送退出命令,结束完当前任务后退出
                         try {
                             if (swoole_process::kill($work_id[0], 0)) {
-                                swoole_process::kill($work_id[0]);
+                                swoole_process::kill($work_id[0], SIGTERM);
                             }
                         } catch (Exception $e) {
                             \Log::info("进程{$work_id[0]}不存在", [], 'cron.stop');
@@ -176,6 +175,7 @@ class Cron
     {
         //子进程结束时主进程收到的信号
         swoole_process::signal(SIGCHLD, function ($signo) {
+
             //kill掉所有worker进程 必须为false，非阻塞模式
             static $worker_count = 0;
             while($ret = swoole_process::wait(false)) {
@@ -185,7 +185,7 @@ class Cron
 
                 //看下是哪个进程退出了 清除worker信息
                 $job = $this->getJobByPid($ret['pid']);
-                if ($job && file_exists($this->cacheDir."/linsten_id")) {
+                if ($job && file_exists($this->logDir."/linsten_id")) {
                     $this->table->set($job['name'].'_worker', [$job['name'].'_worker' => json_encode([])]);
                     $this->removeWorkerPid($job['name']);
 
@@ -197,6 +197,7 @@ class Cron
                     \Log::info("主进程退出!", [$workerNum], 'cron');
                     foreach ($this->jobs as $job) {
                         FileCache::remove('work_id', $this->cacheDir."/".$job['name']);
+                        FileCache::remove('cronAdmin', $this->cacheDir."/".$job['name']);
                     }
                     
                     FileCache::remove('pid', $this->cacheDir);
@@ -205,15 +206,15 @@ class Cron
             }
         });
 
-        swoole_process::signal(SIGUSR2, function ($signo) {
-            //主进程停止tick
-            \Log::info("主进程tick停止!", [], 'cron');
-            $linstenId = FileCache::get('linsten_id', $this->cacheDir);
-            if ($linstenId) {
-                swoole_timer_clear($linstenId);
-                FileCache::remove('linsten_id', $this->cacheDir);
-            }
-        });
+        // swoole_process::signal(SIGUSR2, function ($signo) {
+        //     //主进程停止tick
+        //     \Log::info("主进程tick停止!", [], 'cron');
+        //     $linstenId = FileCache::get('linsten_id', $this->cacheDir);
+        //     if ($linstenId) {
+        //         swoole_timer_clear($linstenId);
+        //         FileCache::remove('linsten_id', $this->cacheDir);
+        //     }
+        // });
     }
 
     /**
@@ -277,25 +278,6 @@ class Cron
         exit("job不存在\n");
     }
 
-    public function rejob()
-    {
-        $argv = $this->argv;
-        $jobName = isset($argv[2]) ? $argv[2] :'';
-        foreach ($this->jobs as $job) {
-            if ($job['name'] == $jobName) {
-                $worker = FileCache::get('work_id', $this->cacheDir."/".$jobName);
-                if (isset($worker[0])) {
-                    $processPid = $worker[0];
-                    exec("kill -USR1 {$processPid}");
-                    exit("{$jobName}重启完成\n");
-                }
-            }
-            continue;
-        }
-
-        exit("job不存在\n");
-    }
-
     public function workerCallBack(swoole_process $worker)
     {   
         $this->init();
@@ -309,20 +291,20 @@ class Cron
         });
 
         //接受重启的信号
-        swoole_process::signal(SIGUSR1, function ($signo) use ($worker) {
-            $pid = $worker->pid;
-            foreach ($this->jobs as $job) {
-                $workers = FileCache::get('work_id', $this->cacheDir."/".$job['name']);
-                if (isset($workers[0]) && $workers[0] == $pid) {
-                    $this->restartJob(['name' => $job['name'], 'workId' => $pid]);
-                }
-            }
-        });
+        // swoole_process::signal(SIGUSR1, function ($signo) use ($worker) {
+        //     $pid = $worker->pid;
+        //     foreach ($this->jobs as $job) {
+        //         $workers = FileCache::get('work_id', $this->cacheDir."/".$job['name']);
+        //         if (isset($workers[0]) && $workers[0] == $pid) {
+        //             $this->restartJob(['name' => $job['name'], 'workId' => $pid]);
+        //         }
+        //     }
+        // });
 
         //接受退出的信号
         swoole_process::signal(SIGTERM, function ($signo) use ($worker) {
             \Log::info("work 退出信号", [], 'cron');
-            $worker->exit();
+            $worker->exit(0);
         });
     }
 
@@ -422,11 +404,8 @@ class Cron
     {
         foreach ($this->jobs as $key => $one) {
             if ($one['name'] == $job['name']) {
-                // $this->table->set($job['name'].'_worker', [$job['name'].'_worker' => json_encode([])]);
-                // $this->table->incr('workers_num', 'workers_num');
-
                 $this->removeWorkerPid($job['name']);
-                swoole_process::kill($job['workId'], SIGKILL);
+                swoole_process::kill($job['workId'], SIGTERM);
                 break;
             }
         }
