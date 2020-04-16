@@ -43,7 +43,7 @@ class ParseCrontab
 
         if (count($cron) == 5) {
             $date = array(
-                'second'  => array(1 => 1),
+                'second'  => [0],
                 'minutes' => self::_parse_cron_number($cron[0], 0, 59),
                 'hours'   => self::_parse_cron_number($cron[1], 0, 23),
                 'day'     => self::_parse_cron_number($cron[2], 1, 31),
@@ -53,7 +53,9 @@ class ParseCrontab
             
             $cron = \Cron\CronExpression::factory($cron[0].' '.$cron[1].' '.$cron[2].' '.$cron[3].' '.$cron[4].' *');
         }
+
         if (
+            in_array(intval(date('s', $start)), $date['second']) &&
             in_array(intval(date('i', $start)), $date['minutes']) &&
             in_array(intval(date('G', $start)), $date['hours']) &&
             in_array(intval(date('j', $start)), $date['day']) &&
