@@ -64,6 +64,7 @@ class CronAdmin
                 $work_id = $this->get('work_id', $cacheDir."/".$job['name']);
                 if (is_array($cronAdmin) && is_array($work_id)) {
                     $work = $cronAdmin[0];
+                    $work['pid'] = $work_id[0];
                     $works[] = $work;
                 } else {
                     $works[] = ['job' => $job, 'pid' => $work_id[0]];

@@ -65,4 +65,4 @@
 
 #### 命令使用
 
-    app/cron [start|restart|stop|status|exec (cron name)|rejob (cron name)]|server 
+    app/cron [start|restart|stop|status|exec (cron name)|server 
